@@ -9,6 +9,7 @@ module.exports = (sequelize, DataTypes) => {
   // 定義資料關聯
   Todo.associate = function (models) {
     // associations can be defined here
+    Todo.belongsTo(models.User)
   };
   return Todo;
 };
