@@ -1,23 +1,34 @@
 'use strict'
 
-const passport = require('passport')
 const express = require('express')
 const router = express.Router()
+const passport = require('passport')
+const bcrypt = require('bcryptjs')
 
 const db = require('../../models')
 const User = db.User
 
 router.get('/login', (req, res) => {
-  res.render('login')
+  const email = req.flash('email')
+  const password = req.flash('password')
+
+  res.render('login', { email, password })
 })
 
-router.post('/login', passport.authenticate('local', {
-  successRedirect: '/',
-  failureRedirect: '/users/login'
-}))
+router.post('/login', (req, res, next) => {
+  req.flash('email', req.body.email)
+  req.flash('password', req.body.password)
+  next()
+},
+  passport.authenticate('local', {
+    successRedirect: '/',
+    failureRedirect: '/users/login',
+  }))
 
 router.get('/logout', (req, res) => {
-  res.send('logout')
+  req.logout()
+  req.flash('success_msg', '你已經成功登出。')
+  res.redirect('/users/login')
 })
 
 router.get('/register', (req, res) => {
