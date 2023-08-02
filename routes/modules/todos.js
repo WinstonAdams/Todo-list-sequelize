@@ -31,7 +31,7 @@ router.get('/:id/edit', (req, res) => {
   const id = req.params.id
   const UserId = req.user.id
 
-  Todo.findOne({ id, UserId })
+  Todo.findOne({ where: { id, UserId } })
     .then(todo => res.render('edit', { todo: todo.toJSON() }))
     .catch(error => console.log(error))
 })
@@ -41,13 +41,22 @@ router.put('/:id', (req, res) => {
   const UserId = req.user.id
   const { name, isDone } = req.body
 
-  Todo.findOne({ id, UserId })
+  Todo.findOne({ where: { id, UserId } })
     .then(todo => {
       todo.name = name
       todo.isDone = isDone === 'on'
       return todo.save()
     })
     .then(() => res.redirect(`/todos/${id}`))
+    .catch(error => console.log(error))
+})
+
+router.delete('/:id', (req, res) => {
+  const id = req.params.id
+  const UserId = req.user.id
+
+  Todo.destroy({ where: { id, UserId } })
+    .then(() => res.redirect('/'))
     .catch(error => console.log(error))
 })
 
