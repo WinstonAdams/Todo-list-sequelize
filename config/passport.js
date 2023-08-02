@@ -2,7 +2,9 @@
 
 const passport = require('passport')
 const LocalStrategy = require('passport-local').Strategy
+const FacebookStrategy = require('passport-facebook').Strategy
 const bcrypt = require('bcryptjs')
+
 const db = require('../models')
 const User = db.User
 
@@ -27,6 +29,31 @@ module.exports = app => {
       })
       .catch(err => done(err, false))
   }))
+
+  passport.use(new FacebookStrategy({
+    clientID: process.env.FACEBOOK_ID,
+    clientSecret: process.env.FACEBOOK_SECRET,
+    callbackURL: process.env.FACEBOOK_CALLBACK,
+    profileFields: ['email', 'displayName'] // 向 Facebook 要求開放的資料 (email 和 Facebook 上的公開名稱)
+  },
+    (accessToken, refreshToken, profile, done) => {
+      // profile 裡面有一個 _json 物件，包含 email 和 name
+      const { name, email } = profile._json
+
+      User.findOne({ where: { email } })
+        .then(user => {
+          if (user) return done(null, user)
+
+          const randomPassword = Math.random().toString(36).slice(-8)
+          return bcrypt
+            .genSalt(10)
+            .then(salt => bcrypt.hash(randomPassword, salt))
+            .then(hash => User.create({ name, email, password: hash }))
+            .then(user => done(null, user))
+            .catch(err => done(err, false))
+        })
+    }
+  ))
 
   passport.serializeUser((user, done) => {
     done(null, user.id)
